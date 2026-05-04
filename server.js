@@ -68,5 +68,29 @@ app.post('/order-complete', async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
+app.post('/wholesale-inquiry', async (req, res) => {
+  try {
+    const { name, email, org, products, volume, notes } = req.body;
+    await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: process.env.GMAIL_USER,
+      subject: `Wholesale Inquiry — ${name} (${org})`,
+      html: `
+        <h2>New Wholesale Inquiry</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Organization:</strong> ${org}</p>
+        <p><strong>Products:</strong> ${products||'Not specified'}</p>
+        <p><strong>Monthly Volume:</strong> ${volume||'Not specified'}</p>
+        <p><strong>Notes:</strong> ${notes||'None'}</p>
+      `,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Wholesale email error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`LookLabs backend running on port ${PORT}`));
