@@ -1,21 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.post('/create-payment-intent', async (req, res) => {
   try {
@@ -38,10 +30,9 @@ app.post('/create-payment-intent', async (req, res) => {
 app.post('/order-complete', async (req, res) => {
   try {
     const { name, email, address, city, state, zip, country, items, total } = req.body;
-
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
-      to: process.env.GMAIL_USER,
+    await resend.emails.send({
+      from: 'LookLabs Orders <onboarding@resend.dev>',
+      to: 'looklabs23@gmail.com',
       subject: `New LookLabs Order — ${name}`,
       html: `
         <h2>New Order Received!</h2>
@@ -58,7 +49,6 @@ app.post('/order-complete', async (req, res) => {
         <h3>Total Charged: $${total}</h3>
       `,
     });
-
     res.json({ ok: true });
   } catch (err) {
     console.error('Email error:', err);
@@ -66,23 +56,21 @@ app.post('/order-complete', async (req, res) => {
   }
 });
 
-app.get('/health', (req, res) => res.json({ ok: true }));
-
 app.post('/wholesale-inquiry', async (req, res) => {
   try {
     const { name, email, org, products, volume, notes } = req.body;
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
-      to: process.env.GMAIL_USER,
+    await resend.emails.send({
+      from: 'LookLabs <onboarding@resend.dev>',
+      to: 'looklabs23@gmail.com',
       subject: `Wholesale Inquiry — ${name} (${org})`,
       html: `
         <h2>New Wholesale Inquiry</h2>
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Organization:</strong> ${org}</p>
-        <p><strong>Products:</strong> ${products||'Not specified'}</p>
-        <p><strong>Monthly Volume:</strong> ${volume||'Not specified'}</p>
-        <p><strong>Notes:</strong> ${notes||'None'}</p>
+        <p><strong>Products:</strong> ${products || 'Not specified'}</p>
+        <p><strong>Monthly Volume:</strong> ${volume || 'Not specified'}</p>
+        <p><strong>Notes:</strong> ${notes || 'None'}</p>
       `,
     });
     res.json({ ok: true });
@@ -91,6 +79,8 @@ app.post('/wholesale-inquiry', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.get('/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`LookLabs backend running on port ${PORT}`));
