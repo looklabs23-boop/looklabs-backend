@@ -7,7 +7,7 @@ const path = require('path');
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '25mb' }));
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const REVIEWS_FILE = path.join(__dirname, 'reviews.json');
