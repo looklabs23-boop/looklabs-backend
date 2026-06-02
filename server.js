@@ -2,23 +2,35 @@ const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Resend } = require('resend');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const REVIEWS_FILE = path.join(__dirname, 'reviews.json');
+
+function loadReviews() {
+  try {
+    if (fs.existsSync(REVIEWS_FILE)) {
+      return JSON.parse(fs.readFileSync(REVIEWS_FILE, 'utf8'));
+    }
+  } catch (e) {}
+  return [];
+}
+
+function saveReviews(reviews) {
+  fs.writeFileSync(REVIEWS_FILE, JSON.stringify(reviews, null, 2));
+}
 
 app.post('/create-payment-intent', async (req, res) => {
   try {
     const { amount, currency, receipt_email } = req.body;
-    if (!amount || amount < 50) {
-      return res.status(400).json({ error: 'Invalid amount' });
-    }
+    if (!amount || amount < 50) return res.status(400).json({ error: 'Invalid amount' });
     const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: currency || 'usd',
-      receipt_email,
+      amount, currency: currency || 'usd', receipt_email,
       automatic_payment_methods: { enabled: true },
     });
     res.json({ clientSecret: paymentIntent.client_secret });
@@ -76,6 +88,23 @@ app.post('/wholesale-inquiry', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('Wholesale email error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/get-reviews', (req, res) => {
+  res.json(loadReviews());
+});
+
+app.post('/save-review', (req, res) => {
+  try {
+    const { name, stars, body, date, photo } = req.body;
+    if (!name || !stars || !body) return res.status(400).json({ error: 'Missing fields' });
+    const reviews = loadReviews();
+    reviews.unshift({ name, stars, body, date, photo: photo || null });
+    saveReviews(reviews);
+    res.json({ ok: true });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
