@@ -92,6 +92,31 @@ app.post('/wholesale-inquiry', async (req, res) => {
   }
 });
 
+app.post('/creator-apply', async (req, res) => {
+  try {
+    const { name, email, platform, handle, followers, niche, why } = req.body;
+    await resend.emails.send({
+      from: 'LookLabs <onboarding@resend.dev>',
+      to: 'looklabs23@gmail.com',
+      subject: `Creator Application — ${name} (${platform})`,
+      html: `
+        <h2>New Creator Program Application</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Platform:</strong> ${platform}</p>
+        <p><strong>Handle:</strong> ${handle}</p>
+        <p><strong>Followers:</strong> ${followers}</p>
+        <p><strong>Niche:</strong> ${niche || 'Not specified'}</p>
+        <p><strong>Why they want to partner:</strong> ${why || 'Not provided'}</p>
+      `,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Creator app error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/get-reviews', (req, res) => {
   res.json(loadReviews());
 });
