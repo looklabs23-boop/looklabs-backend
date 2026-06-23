@@ -133,7 +133,36 @@ app.post('/save-review', (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// Add this route to your existing server.js, anywhere above app.get('/health', ...)
 
+app.post('/promo-used', async (req, res) => {
+  try {
+    const { code, email, name, orderTotal } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ error: 'Missing promo code' });
+    }
+
+    await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: process.env.GMAIL_USER,
+      subject: `Promo Code Used: ${code}`,
+      html: `
+        <h2>Promo Code Applied</h2>
+        <p><strong>Code:</strong> ${code}</p>
+        <p><strong>Customer Name:</strong> ${name || 'N/A'}</p>
+        <p><strong>Customer Email:</strong> ${email || 'N/A'}</p>
+        <p><strong>Order Total (after discount):</strong> ${orderTotal != null ? '$' + orderTotal : 'N/A'}</p>
+        <p><strong>Time:</strong> ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })}</p>
+      `,
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Promo tracking email error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3000;
