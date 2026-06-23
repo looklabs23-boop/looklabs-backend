@@ -80,7 +80,7 @@ app.post('/order-complete', async (req, res) => {
             <h3>Total Charged: $${total}</h3>
             <h3>Shipping To</h3>
             <p>${address}<br>${city}, ${state} ${zip}<br>${country}</p>
-            <p style="margin-top:24px;color:#888;font-size:13px">If you have any questions about your order, just reply to this email.</p>
+            <p style="margin-top:24px;color:#888;font-size:13px">If you have any questions about your order, email us at looklabs23@gmail.com.</p>
           `,
         });
       } catch (custErr) {
