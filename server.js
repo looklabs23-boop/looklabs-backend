@@ -172,17 +172,7 @@ app.post('/promo-used', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-app.get('/setup-db-once-zx7k9', async (req, res) => {
-  try {
-    const fs = require('fs');
-    const sql = fs.readFileSync('./schema.sql', 'utf8');
-    await pool.query(sql);
-    res.send('Tables created successfully. You can now remove this route from server.js.');
-  } catch (err) {
-    console.error('Setup error:', err);
-    res.status(500).send('Error: ' + err.message);
-  }
-});
+
  
 // --- Middleware: verify a logged-in request ---
 function requireAuth(req, res, next) {
